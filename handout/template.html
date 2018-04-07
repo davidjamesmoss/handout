@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Handout</title>
+        <style>
+            body {
+                font-family: Helvetica, Arial, sans-serif;
+                padding: 2em;
+                line-height: 1.4em;
+            }
+            @media screen and (min-width: 768px) {
+                body {
+                    display: flex;
+                    flex-flow: row;
+                    align-items: flex-start;
+                }
+                main {
+                    display: flex;
+                }
+                nav {
+                    display: flex;
+                    min-width: 20rem;
+                }
+            }
+            nav ul {
+                width: 100%;
+                height: 100%;
+                margin: 1em 2em 0 0;
+                padding: 0.5em 0;
+                background-color: #eee;
+                border: 1px solid #ddd;
+                border-radius: 0.2rem;
+                list-style: none;
+            }
+            nav ul li a {
+                display: block;
+                padding: 0.5em 1em;
+                text-decoration: none;
+                color: black;
+            }
+            nav ul li.active a {
+                background-color: #337CB3;
+                color: white;
+            }
+            section {
+                display: none;
+                opacity: 0;
+                transition: opacity 150ms linear;
+            }
+            section.active {
+                display: block;
+            }
+            section.fade {
+                opacity: 1;
+            }
+            .toc ul {
+                list-style: none;
+                padding: 0;
+            }
+            .toc ul li > ul {
+                padding: 0 0 1em 1.2em;
+            }
+            .toc ul li > ul > li > ul {
+                padding: 0 0 0 1.2em;
+            }
+            figure {
+                margin: 0;
+            }
+            figcaption {
+                margin: 0;
+                padding: 0.5em;
+                border-left: 4px solid #eee;
+                font-size: 0.9em;
+            }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                {% for page in pages %}
+                    <li{% if loop.first %} class="active"{% endif %}>
+                        <a href="#{{ page.slug }}">{{ page.title }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </nav>
+        <main>
+            {% for page in pages %}
+                <section id="{{ page.slug }}"{% if loop.first %} class="active fade"{% endif %}>
+                    <!-- <h1>{{ page.title }}</h1> -->
+                    {{ page.body|safe }}
+                </section>
+            {% endfor %}
+            </main>
+        <script>
+            function change_page(hash_slug) {
+                // Fade out the page
+                document.querySelectorAll('section').forEach(function(elem) {
+                    elem.classList.remove('fade'); // fade out
+                });
+
+                // Wait until faded out, then swap the pages and then fade in.
+                window.setTimeout(function(){
+                    document.querySelectorAll('section').forEach(function(elem) {
+                        elem.classList.remove('active'); // hide the page
+                    });
+                    document.querySelector(hash_slug).classList.add('fade'); // fade in
+                    document.querySelector(hash_slug).classList.add('active'); // show new page
+                }, 150);
+
+                // Update the navigation and window title
+                document.querySelectorAll('nav ul li').forEach(function(elem) {
+                    elem.classList.remove('active');
+                });
+                elem = document.querySelector("nav ul li a[href='" + hash_slug + "']")
+                elem.parentNode.classList.add('active');
+                window.document.title = elem.text;
+
+                history.pushState(null, null, hash_slug);
+            }
+
+            window.onload = function() {
+                // Add nav click handlers
+                document.querySelectorAll('nav ul li a').forEach(function(elem) {
+                    elem.addEventListener('click', (function(e) {
+                        e.preventDefault();
+                        change_page(elem.getAttribute('href'));
+                    }));
+                });
+
+                // Add a handler to all the hash links within pages
+                document.querySelectorAll("section a[href^='#']").forEach(function(elem) {
+                    elem.addEventListener('click', (function(e) {
+                        e.preventDefault();
+                        document.querySelector("nav ul li a[href='" + elem.getAttribute('href') + "']").click();
+                    }));
+                });
+
+                // Look for a hash slug in the URL and switch to that page
+                if (location.hash !== '') {
+                    document.querySelector("nav ul li a[href='" + location.hash + "']").click();
+                }
+                // Or just set the window title
+                else {
+                    window.document.title = document.querySelector('nav ul li.active a').text;
+                }
+            };
+        </script>
+    </body>
+</html>
